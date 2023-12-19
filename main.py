@@ -2,6 +2,7 @@
 #Elizabeth Tan, Yee Wan Sim, Shannen Pang, Nge Sin Yu
 
 # import modules
+import json
 from math import floor
 from abc import ABC, abstractmethod
 
@@ -74,18 +75,44 @@ class Game:
        pass
 
     def printScore(self):
-        pass
+        print(f"Current score: {self.score}")
 
     def save(self):
         # things to save:
         #   1. board
         #   2. current score
         #   3. current coins 
-        pass
+
+        gameState = {
+            "board": {
+                "length": self.board.length,
+                "corner": self.board.corner,
+                "hor": self.board.hor,
+                "ver": self.board.ver,
+                "board": self.board.board
+            },
+            "coins": self.coins,
+            "score": self.score
+        }
+        with open("save_game.json", "w") as write_file:
+            json.dump(gameState, write_file)
+        print("Game successfully saved!")
+        return
 
     def exit(self):
-        pass
-    
+        valid = False
+        while not (valid):
+            confirm = input("All progress will be lost. Confirm exit? (y/n): ")
+            valid = confirm.lower() in ["y", "n"]
+            if not (valid):
+                print("Please enter a valid option.")
+                continue
+
+        if confirm.lower() == "n":
+            print(f"Exit cancelled...")
+            return False
+        print("Exiting game and returning to main menu...")
+        return True
 # end of Game class
     
 # board
