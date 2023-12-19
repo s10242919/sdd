@@ -4,6 +4,7 @@
 # import modules
 import json
 from math import floor
+import random
 from abc import ABC, abstractmethod
 
 # classes
@@ -69,10 +70,49 @@ class Game:
                 else:
                     break
         list(options.values())[option]()
-        
 
     def build(self):
-       pass
+        success = False
+        numOptions = 2
+        buildings = [Residential, Industry, Commercial, Park, Road]
+        buildOptions = [building() for building in random.sample(buildings, numOptions)] 
+        
+        while not (success):
+            print(f"Choose one from the following options: ")
+            for idx, building in enumerate(buildOptions):
+                print(f"{idx+1}. {building.name}")
+            
+            # get user's input
+            while True:
+                try:
+                    option = int(input(f"Enter your option: "))
+                except ValueError:
+                    print("Please enter a number.")
+                    continue
+                if not (option-1 in range(numOptions)):
+                    print("Please enter a valid option.")
+                    continue
+                else:
+                    break
+            # retrieve chosen building
+            building = buildOptions.pop(option-1)
+            
+            # get coords (validation in Board object)
+            coord = input(f"Square to place {building.name} (e.g. F2): ")
+
+            # check if user has enough coins
+            if self.coins < building.cost:
+                print(f"Not enough coins to build {building.name}.")
+                continue
+
+            if not (self.board.add(building, coord)):
+                continue
+
+        # del remaining buildings
+        for remainder in buildOptions:
+            del remainder
+
+        print()
 
     def printScore(self):
         print(f"Current score: {self.score}")
