@@ -1,8 +1,8 @@
 #SDD Assignment
 #Elizabeth Tan, Yee Wan Sim, Shannen Pang, Nge Sin Yu
-
 # import modules
 import json
+import jsonpickle
 from math import floor
 import random
 from abc import ABC, abstractmethod
@@ -18,14 +18,27 @@ class Game:
             raise ValueError(f"Expected positive int, got {coins}")
         self._coins = coins
         self._score = 0
+        self._turn = 1
 
     @property
     def board(self):
         return self._board
+    
+    @board.setter
+    def board(self, val):
+        if not (isinstance(val, (Board))):
+            raise TypeError(f"Expected Board, got {type(val)}")
+        self._board = val
 
     @property
     def coins(self):
         return self._coins
+    
+    @coins.setter
+    def coins(self, val):
+        if not (isinstance(val, (int))):
+            raise TypeError(f"Expected int, got {type(val)}")
+        self._coins = val
 
     @property
     def score(self):
@@ -36,7 +49,20 @@ class Game:
         if not (isinstance(val, (int))):
             raise TypeError(f"Expected int, got {type(val)}")
         self._score = val
-        
+    
+    @property
+    def turn(self):
+        return self._turn
+    
+    @turn.setter
+    def turn(self, val):
+        if not (isinstance(val, (int))):
+            raise TypeError(f"Expected int, got {type(val)}")
+        self._turn = val
+
+    def incrementTurn(self):
+        self._turn += 1
+
     # display menu
     def menu(self):
         options = {"Build a Building": self.build, 
@@ -44,32 +70,42 @@ class Game:
                    "Save Game": self.save,
                    "Exit to Main Menu": self.exit}
         
-        # show board
-        self._board.print()
+        playing = True
 
-        # show stats
-        print(f"Coins: {self.coins}")
+        while playing:
+            print(f"————— TURN {self.turn} —————")
+            # show board
+            self._board.print()
 
-        print(f"————— GAME MENU —————")
-        for idx, key in enumerate(options.keys()):
-            print(f"{idx+1}. {key}")
+            # show stats
+            print(f"Coins: {self.coins}")
 
-        print(f"—————————————————————")
-        # check if option chosen is valid
-        while True:
-                try:
-                    option = int(input(f"Enter your option: "))
-                except ValueError:
-                    print("Please enter a number.")
-                    continue
-                # minus one to get index value
-                option -= 1
-                if not (option in range(len(options))):
-                    print("Please enter a valid option.")
-                    continue
-                else:
-                    break
-        list(options.values())[option]()
+            print(f"————— GAME MENU —————")
+            for idx, key in enumerate(options.keys()):
+                print(f"{idx+1}. {key}")
+
+            print(f"—————————————————————")
+            # check if option chosen is valid
+            while True:
+                    try:
+                        option = int(input(f"Enter your option: "))
+                    except ValueError:
+                        print("Please enter a number.")
+                        continue
+                    # minus one to get index value
+                    option -= 1
+                    if not (option in range(len(options))):
+                        print("Please enter a valid option.")
+                        continue
+                    else:
+                        break
+            # call function
+            function = list(options.values())[option]
+            playing = function()
+            #increment turn if build
+            if (function == self.build):
+                self.incrementTurn()
+
 
     def build(self):
         success = False
@@ -95,7 +131,7 @@ class Game:
                 else:
                     break
             # retrieve chosen building
-            building = buildOptions.pop(option-1)
+            building = buildOptions[option-1]
             
             # get coords (validation in Board object)
             coord = input(f"Square to place {building.name} (e.g. F2): ")
@@ -105,39 +141,33 @@ class Game:
                 print(f"Not enough coins to build {building.name}.")
                 continue
 
-            if not (self.board.add(building, coord)):
+            if not (self.board.add(building, coord, self.turn == 1)):
                 continue
+            else:
+                success = True
+                self.coins -= building.cost
+                self.score += building.calculatePoints()
+                print(f"Current coins: {self.coins}")
+                print(f"Current score: {self.score}")
+                break
 
         # del remaining buildings
-        for remainder in buildOptions:
-            del remainder
+        for building in buildOptions:
+            del building
 
         print()
+        return True
 
     def printScore(self):
         print(f"Current score: {self.score}")
+        return True
 
     def save(self):
-        # things to save:
-        #   1. board
-        #   2. current score
-        #   3. current coins 
-
-        gameState = {
-            "board": {
-                "length": self.board.length,
-                "corner": self.board.corner,
-                "hor": self.board.hor,
-                "ver": self.board.ver,
-                "board": self.board.board
-            },
-            "coins": self.coins,
-            "score": self.score
-        }
+        gameState = jsonpickle.encode(self)
         with open("save_game.json", "w") as write_file:
             json.dump(gameState, write_file)
         print("Game successfully saved!")
-        return
+        return True
 
     def exit(self):
         valid = False
@@ -150,9 +180,9 @@ class Game:
 
         if confirm.lower() == "n":
             print(f"Exit cancelled...")
-            return False
+            return True
         print("Exiting game and returning to main menu...")
-        return True
+        return False
 # end of Game class
     
 # board
@@ -227,8 +257,51 @@ class Board:
         return self._board
 
     # add building to board
-    def add(self, building, coord): # coord - coordinate
-        pass
+    def add(self, building, coord, firstTurn = False): # coord - coordinate
+        if not (isinstance(building, (Building))):
+            print("Not a valid building.")
+            return False
+        if not (isinstance(coord, (str)) and 
+                (len(coord) >= 2) and 
+                coord[0].isalpha() and 
+                coord[1:].isdigit()):
+            print("Not a valid coordinate. E.g. A19")
+            return False
+
+        # convert to uppercase
+        coord = coord.upper()
+
+        # check x & y coordinates (index value)
+        x = ord(coord[0]) - ord("A")
+        y = int(coord[1:]) - 1
+        
+        if not ((0 <= x <= (self.length-1)) and 0 <= y <= (self.length-1)):
+            print("Coordinate not within boundaries.")
+            return False
+        
+        # self._board[x][y]
+        if isinstance(self.board[x][y], (Building)):
+            print("Coordinate already occupied.")
+            return False
+        
+        # check if turn is 1
+        if not firstTurn:
+            # make sure building is next to another building
+            # check if adjacent squares are empty                
+            if (
+            (x == 0 and not (self._board[x][y-1] or self._board[x][y+1] or self._board[x+1][y]))
+            or (x == self.length-1 and not (self._board[x][y-1] or self._board[x][y+1] or self._board[x-1][y]))
+            or (y == 0 and not (self._board[x-1][y] or self._board[x+1][y] or self._board[x][y+1]))
+            or (y == self.length-1 and not (self._board[x-1][y] or self._board[x+1][y] or self._board[x][y-1]))
+            or (not (self._board[x-1][y] or self._board[x+1][y] or self._board[x][y-1] or self._board[x][y+1]))
+            ):
+                print("Building must be next to another building.")
+                return False
+                
+        building.board = self
+        self._board[x][y] = building
+        print(f"{building.name} added to {coord}.")
+        return True
 
     def print(self): # display board
         # required variables
@@ -334,7 +407,7 @@ class Residential(Building):
         # if next to industry, 1 point only
         # else, 1 point for each adjacent residential or commercial
         # and 2 points for each adjacent park
-        pass
+        return 0
 
 
 class Industry(Building):
@@ -345,7 +418,7 @@ class Industry(Building):
     def calculatePoints(self):
         # 1 point per industry
         # generates 1 coin per adjacent residential
-        pass
+        return 0
 
 
 class Commercial(Building):
@@ -356,7 +429,7 @@ class Commercial(Building):
     def calculatePoints(self):
         # 1 point per adjacent commercial
         # generates 1 coin per adjacent residential
-        pass
+        return 0
 
 
 class Park(Building):
@@ -366,7 +439,7 @@ class Park(Building):
 
     def calculatePoints(self):
         # 1 point per adjacent park
-        pass
+        return 0
 
 
 class Road(Building):
@@ -376,13 +449,93 @@ class Road(Building):
 
     def calculatePoints(self):
         # 1 point per connected road in the same row
-        pass
+        return 0
 # end of 5 Buildings
 # end of classes
     
 # start of functions
+# start new game
+def newGame():
+    # extra feature: get number of coins
+    # get number of coins
+    # while True:
+    #     try:
+    #         coins = int(input(f"Enter number of coins (10-50): "))
+    #     except ValueError:
+    #         print("Please enter a number.")
+    #         continue
+    #     if not (10 <= coins <= 50):
+    #         print("Please enter a valid number.")
+    #         continue
+    #     else:
+    #         break
+    # create game
+    # game = Game(coins)
+    # print(f"New game started with {coins} coins.")
+    game = Game()
+    return game
+
+# load game
+def load():
+    try:
+        with open("save_game.json", "r") as read_file:
+            gameState = json.load(read_file)
+        game = jsonpickle.decode(gameState)
+        print("Game successfully loaded!")
+        return game
+    except FileNotFoundError:
+        print("No saved game found.")
+        return None
+
+# display high scores
+def displayScores():
+    print(f"————— HIGH SCORES —————")
+    # todo: display high scores
+    print(f"———————————————————————")
+    return True
+
 def main():
-    game = Game() # default: 16 coins
-    game.menu()
+    game = None
+    while True:
+        # display menu
+        print(f"————— MAIN MENU —————")
+        print(f"1. Start New Game")
+        print(f"2. Load Saved Game")
+        print(f"3. Display High Scores")
+        print(f"4. Exit")
+        print(f"—————————————————————")
+        # check if option chosen is valid
+        while True:
+                try:
+                    option = int(input(f"Enter your option: "))
+                except ValueError:
+                    print("Please enter a number.")
+                    continue
+                # minus one to get index value
+                option -= 1
+                if not (option in range(4)):
+                    print("Please enter a valid option.")
+                    continue
+                else:
+                    break
+        # call function
+        functions = [newGame, load, displayScores, exit]
+        function = functions[option]
+        if (function == exit):
+            print(f"Exiting program...")
+            function()
+        elif (function == displayScores):
+            function()
+        elif (function == newGame):
+            game = function()
+        elif (function == load):
+            game = function()
+            if game == None:
+                continue
+        
+        print()
+        if game != None:
+            # start game
+            game.menu()
 
 main()
