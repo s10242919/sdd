@@ -3,6 +3,7 @@
 
 # import modules
 import json
+import random
 from math import floor
 from abc import ABC, abstractmethod
 
@@ -18,7 +19,7 @@ class Game:
         self._coins = coins
         self._score = 0
 
-    @property
+    @property #class attibute 
     def board(self):
         return self._board
 
@@ -36,6 +37,41 @@ class Game:
             raise TypeError(f"Expected int, got {type(val)}")
         self._score = val
         
+    #display main_menu
+    def main_menu(self):
+        options = {"Start a new game": self.menu, 
+                   "Load saved game": self.load,
+                   "Display high score": self.highscore,
+                   "Exit game": self.exit}
+        print(f"————— MAIN MENU —————")
+        for idx, key in enumerate(options.keys()):
+            print(f"{idx+1}. {key}")
+
+        print(f"—————————————————————")
+        # check if option chosen is valid
+        while True:
+                try:
+                    option = int(input(f"Enter your option: "))
+                except ValueError:
+                    print("Please enter a number.")
+                    continue
+                # minus one to get index value
+                option -= 1
+                if not (option in range(len(options))):
+                    print("Please enter a valid option.")
+                    continue
+                else:
+                    break
+        list(options.values())[option]()
+
+    #load saved game
+    def load(self):
+        pass
+
+    #display high score
+    def highscore(self):
+        pass
+
     # display menu
     def menu(self):
         options = {"Build a Building": self.build, 
@@ -72,7 +108,61 @@ class Game:
         
 
     def build(self):
-       pass
+       buildingList = [Residential, Industry, Commercial, Park, Road]
+
+       randomBuilding1 = random.randrange(0,5)
+       randomBuilding2 = random.randrange(0,5)
+       # ensure that both building option is not the same
+       while (randomBuilding2 == randomBuilding1):
+           randomBuilding2 = random.randrange(0,5)
+       building = [buildingList[randomBuilding1], buildingList[randomBuilding2]]
+
+       #print buildings and options
+       print(f"——————BUILDINGS——————")
+       print("R - Residential\nI - Industry\nC - Commercial\nO - Park\n* - Road")
+       print("Building Options: \n1)", building[0]().character,"\n2)", building[1]().character)
+       print(f"—————————————————————")
+
+       #input building option and check if option is valid
+       while True:
+           try:
+               building_option = int(input("Enter your option: "))
+           except ValueError:
+               print("Please enter a number (1 OR 2).")
+               continue
+           building_option -= 1
+           if not (building_option in range(len(building))):
+            print("Please enter a valid option.")
+            continue
+           else:
+               building_option = building[int(building_option)]
+               break
+           
+       #input placing option and check if option is valid
+       while True:
+           try:
+               coord_input = (input("Place where? "))
+               row=ord(coord_input[0].upper()) - ord('A') + 1
+               if (len(coord_input) == 2):
+                    column = int(coord_input[-1:])
+               elif (len(coord_input) == 3):
+                    column = int(coord_input[-2:])
+               else:
+                   column = None 
+           except ValueError:
+               print("Please enter a valid input.")
+               continue
+           if ((column > 20) or (column == None) or (row > 20)):
+               print("Please enter a valid placing.")
+               continue
+           else:
+               break
+       coord = [row - 1,column - 1]
+       Board.add(self, building_option, coord)
+       self._coins -= 1
+       building_option().calculatePoints(coord)
+
+
 
     def printScore(self):
         print(f"Current score: {self.score}")
@@ -188,7 +278,46 @@ class Board:
 
     # add building to board
     def add(self, building, coord): # coord - coordinate
-        pass
+        row = coord[0]
+        col = coord[-1] or coord[-2]
+        print(self._board.board[row][col])
+        self._board.board[row][col] = building()
+        print(self._board.board[row][col])
+
+    # def print(self): # display board
+    #     # required variables
+    #     mid = floor(self._sqrWidth / 2)  # get center index to replace
+    #     charOrd  = ord('A') - 1
+
+    #     #display col numbers
+    #     for rowIdx, row in enumerate(self._board):
+    #         rowLength = len(row)
+    #         #print col numbers
+    #         if rowIdx == 0:
+    #             print("   ", end="")
+    #             for colIdx in range(len(row)):
+    #                 print(
+    #                     f" {' ' * mid}{colIdx + 1}{' ' * (self._sqrWidth - mid - len(str(colIdx+1)))}",
+    #                     end="")
+    #                 if (colIdx == rowLength - 1):
+    #                     print("\n", end="")
+
+    #         # horizontal line +---+---+ (first 20)
+    #         print(
+    #             f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
+    #         )
+
+    #         # vertical line   |   |   |    
+    #         charOrd += 1
+    #         sqrText = ' ' * self._sqrWidth # text in square
+    #         print(
+    #             f" {chr(charOrd)} {self._ver}{self._ver.join(sqrText if col == 0 else f'{sqrText[:mid]}{col.character}{sqrText[mid + 1:]}' for col in row)}{self._ver}"
+    #         )
+    #         # last horizontal line +---+---+
+    #         if rowIdx == rowLength - 1:
+    #             print(
+    #                 f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
+    #             )
 
     def print(self): # display board
         # required variables
@@ -224,6 +353,8 @@ class Board:
                 print(
                     f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
                 )
+
+
 # end of Board
 
 
@@ -280,7 +411,7 @@ class Building(ABC):
 
     # abstract method to calculatePoints
     @abstractmethod
-    def calculatePoints(self):
+    def calculatePoints(self,coord):
         # each building has its own implementation
         pass
 
@@ -296,16 +427,14 @@ class Residential(Building):
         # and 2 points for each adjacent park
         pass
 
-
 class Industry(Building):
     def __init__(self):
         super().__init__()
         self._character = "I"
-
     def calculatePoints(self):
         # 1 point per industry
         # generates 1 coin per adjacent residential
-        pass
+        print("Industry")
 
 
 class Commercial(Building):
@@ -316,7 +445,7 @@ class Commercial(Building):
     def calculatePoints(self):
         # 1 point per adjacent commercial
         # generates 1 coin per adjacent residential
-        pass
+        print("Commercial")
 
 
 class Park(Building):
@@ -326,7 +455,7 @@ class Park(Building):
 
     def calculatePoints(self):
         # 1 point per adjacent park
-        pass
+        print("park")
 
 
 class Road(Building):
@@ -336,13 +465,14 @@ class Road(Building):
 
     def calculatePoints(self):
         # 1 point per connected road in the same row
-        pass
+        print("road")
 # end of 5 Buildings
 # end of classes
     
 # start of functions
 def main():
     game = Game() # default: 16 coins
-    game.menu()
+    # game.menu()
+    game.main_menu()
 
 main()
