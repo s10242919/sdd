@@ -243,6 +243,7 @@ class Building(ABC):
         return self._cost
     
     # cost setter
+
     @cost.setter
     def cost(self, val):
         if not (isinstance(val, (int))):
@@ -342,28 +343,7 @@ class Road(Building):
     
 # start of functions
 def main():
-    # create main menu 
-    while True:
-        print("------------ Main Menu ------------")
-        print("1. Start New Game")
-        print("2. Load Saved Game")
-        print("3. Display High Scores")
-        print("4. Exit Game")
 
-        choice = input("Enter your option [1-4]: ")
-
-        if choice == '1':
-            start_new_game()
-        elif choice == '2':
-            load_saved_game()
-        elif choice == '3':
-            display_high_scores()
-        elif choice == '4':
-            print("Exit game. Goodbye!")
-            break
-        else:
-            print("Invalid choice. Please enter a number between 1 and 4.")
-            
     # load saved game
     def load_saved_game():
         try:
@@ -399,6 +379,29 @@ def main():
 
         except Exception as e:
             print(f"Error: {e}")
+
+    # create main menu 
+    while True:
+        print("------------ Main Menu ------------")
+        print("1. Start New Game")
+        print("2. Load Saved Game")
+        print("3. Display High Scores")
+        print("4. Exit Game")
+
+        choice = input("Enter your option [1-4]: ")
+
+        if choice == '1':
+            start_new_game()
+        elif choice == '2':
+            load_saved_game()
+        elif choice == '3':
+            display_high_scores()
+        elif choice == '4':
+            print("Exit game. Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please enter a number between 1 and 4.")
+            
 
     game = Game() # default: 16 coins
     game.menu()
