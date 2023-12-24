@@ -471,6 +471,64 @@ class Road(Building):
     
 # start of functions
 def main():
+    # create main menu 
+    while True:
+        print("------------ Main Menu ------------")
+        print("1. Start New Game")
+        print("2. Load Saved Game")
+        print("3. Display High Scores")
+        print("4. Exit Game")
+
+        choice = input("Enter your option [1-4]: ")
+
+        if choice == '1':
+            start_new_game()
+        elif choice == '2':
+            load_saved_game()
+        elif choice == '3':
+            display_high_scores()
+        elif choice == '4':
+            print("Exit game. Goodbye!")
+            break
+        else:
+            print("Invalid choice. Please enter a number between 1 and 4.")
+            
+    # load saved game
+    def load_saved_game():
+        try:
+            with open("save_game.json", "r") as read_saved:
+                saved_game = json.load(read_saved)
+
+                # Get data from file
+                saved_board = saved_game.get("board")
+                saved_coins = saved_game.get("coins")
+                saved_score = saved_game.get("score")
+
+                # New Game instance 
+                loaded_game = Game(coins = saved_coins)
+                loaded_game.score = saved_score
+
+                # New Board instance
+                loaded_board = Board(
+                length = saved_board.get("length", Board._defaultLength),
+                corner = saved_board.get("corner", Board._defaultCorner),
+                hor = saved_board.get("hor", Board._defaultHor),
+                ver = saved_board.get("ver", Board._defaultVer)
+                )
+                loaded_board.board = saved_board.get("board", [])
+
+                # Set the loaded board to the loaded game
+                loaded_game.board = loaded_board
+
+                print("Game successfully loaded!")
+                loaded_game.menu()  # Start the loaded game
+
+        except FileNotFoundError:
+            print("No saved game.")
+
+        except Exception as e:
+            print(f"Error: {e}")
+
     game = Game() # default: 16 coins
     # game.menu()
     game.main_menu()
