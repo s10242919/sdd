@@ -367,7 +367,7 @@ def main():
     # load saved game
     def load_saved_game():
         try:
-            with open(save_game.json, "r") as read_saved:
+            with open("save_game.json", "r") as read_saved:
                 saved_game = json.load(read_saved)
 
                 # Get data from file
@@ -386,7 +386,7 @@ def main():
                 hor = saved_board.get("hor", Board._defaultHor),
                 ver = saved_board.get("ver", Board._defaultVer)
                 )
-                loaded_board.board = board_data.get("board", [])
+                loaded_board.board = saved_board.get("board", [])
 
                 # Set the loaded board to the loaded game
                 loaded_game.board = loaded_board
