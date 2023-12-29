@@ -344,22 +344,27 @@ class Road(Building):
 # start of functions
 def main():
 
+    # start new game
+    def start_new_game():
+        game = Game() # default: 16 coins
+        game.menu()
+
     # load saved game
     def load_saved_game():
         try:
             with open("save_game.json", "r") as read_saved:
                 saved_game = json.load(read_saved)
 
-                # Get data from file
+                # get data from file
                 saved_board = saved_game.get("board")
                 saved_coins = saved_game.get("coins")
                 saved_score = saved_game.get("score")
 
-                # New Game instance 
+                # new Game instance 
                 loaded_game = Game(coins = saved_coins)
                 loaded_game.score = saved_score
 
-                # New Board instance
+                # new Board instance
                 loaded_board = Board(
                 length = saved_board.get("length", Board._defaultLength),
                 corner = saved_board.get("corner", Board._defaultCorner),
@@ -368,11 +373,11 @@ def main():
                 )
                 loaded_board.board = saved_board.get("board", [])
 
-                # Set the loaded board to the loaded game
+                # set the loaded board to the loaded game
                 loaded_game.board = loaded_board
 
                 print("Game successfully loaded!")
-                loaded_game.menu()  # Start the loaded game
+                loaded_game.menu()  # start the loaded game
 
         except FileNotFoundError:
             print("No saved game.")
@@ -402,8 +407,5 @@ def main():
         else:
             print("Invalid choice. Please enter a number between 1 and 4.")
             
-
-    game = Game() # default: 16 coins
-    game.menu()
 
 main()
