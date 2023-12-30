@@ -21,6 +21,13 @@ class Game:
     @property
     def board(self):
         return self._board
+    
+    # (CHANGE) load saved game
+    @board.setter
+    def board(self, loaded_board):
+        if not isinstance(loaded_board, Board):
+            raise TypeError(f"{type(loaded_board)} not allowed. Board expected.")
+        self._board = loaded_board
 
     @property
     def coins(self):
@@ -185,6 +192,11 @@ class Board:
     @property
     def board(self):
         return self._board
+    
+    # (CHANGE) set board attribute to load saved game
+    @board.setter
+    def board(self, loaded_board):
+        self._board = loaded_board
 
     # add building to board
     def add(self, building, coord): # coord - coordinate
@@ -357,6 +369,7 @@ def main():
 
                 # get data from file
                 saved_board = saved_game.get("board")
+                # print("test 1")
                 saved_coins = saved_game.get("coins")
                 saved_score = saved_game.get("score")
 
@@ -371,10 +384,14 @@ def main():
                 hor = saved_board.get("hor", Board._defaultHor),
                 ver = saved_board.get("ver", Board._defaultVer)
                 )
-                loaded_board.board = saved_board.get("board", [])
+                # print("test 2")
+                loaded_board.board = saved_board.get("board", []) 
+                # print("test 3")
+
 
                 # set the loaded board to the loaded game
-                loaded_game.board = loaded_board
+                loaded_game.board = loaded_board # Error: can't set attribute 'board'
+                # print("test 4")
 
                 print("Game successfully loaded!")
                 loaded_game.menu()  # start the loaded game
