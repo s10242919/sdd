@@ -40,9 +40,9 @@ class Game:
     # display menu
     def menu(self):
         options = {"Build a Building": self.build, 
-                   "See Current Score": self.printScore,
-                   "Save Game": self.save,
-                   "Exit to Main Menu": self.exit}
+                "See Current Score": self.printScore,
+                "Save Game": self.save,
+                "Exit to Main Menu": self.exit}
         
         # show board
         self._board.print()
@@ -687,7 +687,8 @@ def main():
     # start new game
     def start_new_game():
         game = Game() # default: 16 coins
-        game.menu()
+        while True:
+            game.menu()
 
     # load saved game
     def load_saved_game():
@@ -734,7 +735,6 @@ def main():
         print("4. Exit Game")
 
         choice = input("Enter your option [1-4]: ")
-
         if choice == '1':
             start_new_game()
         elif choice == '2':
