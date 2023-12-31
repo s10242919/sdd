@@ -303,6 +303,7 @@ class Building(ABC):
         return self._cost
     
     # cost setter
+
     @cost.setter
     def cost(self, val):
         if not (isinstance(val, (int))):
@@ -682,6 +683,48 @@ class Road(Building):
     
 # start of functions
 def main():
+
+    # start new game
+    def start_new_game():
+        game = Game() # default: 16 coins
+        game.menu()
+
+    # load saved game
+    def load_saved_game():
+        try:
+            with open("save_game.json", "r") as read_saved:
+                saved_game = json.load(read_saved)
+
+                # get data from file
+                saved_board = saved_game.get("board")
+                saved_coins = saved_game.get("coins")
+                saved_score = saved_game.get("score")
+
+                # new Game instance 
+                loaded_game = Game(coins = saved_coins)
+                loaded_game.score = saved_score
+
+                # new Board instance
+                loaded_board = Board(
+                length = saved_board.get("length", Board._defaultLength),
+                corner = saved_board.get("corner", Board._defaultCorner),
+                hor = saved_board.get("hor", Board._defaultHor),
+                ver = saved_board.get("ver", Board._defaultVer)
+                )
+                loaded_board.board = saved_board.get("board", [])
+
+                # set the loaded board to the loaded game
+                loaded_game.board = loaded_board
+
+                print("Game successfully loaded!")
+                loaded_game.menu()  # start the loaded game
+
+        except FileNotFoundError:
+            print("No saved game.")
+
+        except Exception as e:
+            print(f"Error: {e}")
+
     # create main menu 
     while True:
         print("------------ Main Menu ------------")
@@ -704,43 +747,5 @@ def main():
         else:
             print("Invalid choice. Please enter a number between 1 and 4.")
             
-    # load saved game
-    def load_saved_game():
-        try:
-            with open("save_game.json", "r") as read_saved:
-                saved_game = json.load(read_saved)
-
-                # Get data from file
-                saved_board = saved_game.get("board")
-                saved_coins = saved_game.get("coins")
-                saved_score = saved_game.get("score")
-
-                # New Game instance 
-                loaded_game = Game(coins = saved_coins)
-                loaded_game.score = saved_score
-
-                # New Board instance
-                loaded_board = Board(
-                length = saved_board.get("length", Board._defaultLength),
-                corner = saved_board.get("corner", Board._defaultCorner),
-                hor = saved_board.get("hor", Board._defaultHor),
-                ver = saved_board.get("ver", Board._defaultVer)
-                )
-                loaded_board.board = saved_board.get("board", [])
-
-                # Set the loaded board to the loaded game
-                loaded_game.board = loaded_board
-
-                print("Game successfully loaded!")
-                loaded_game.menu()  # Start the loaded game
-
-        except FileNotFoundError:
-            print("No saved game.")
-
-        except Exception as e:
-            print(f"Error: {e}")
-
-    game = Game() # default: 16 coins
-    game.menu()
 
 main()
