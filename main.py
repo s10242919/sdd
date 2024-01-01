@@ -145,17 +145,18 @@ class Game:
         #   2. current score
         #   3. current coins 
 
-        gameState = {
-            "board": {
-                "length": self.board.length,
-                "corner": self.board.corner,
-                "hor": self.board.hor,
-                "ver": self.board.ver,
-                "board": self.board.board
-            },
-            "coins": self.coins,
-            "score": self.score
-        }
+        #gameState = {
+        #    "board": {
+        #        "length": self.board.length,
+        #        "corner": self.board.corner,
+        #        "hor": self.board.hor,
+        #        "ver": self.board.ver,
+        #        "board": self.board.board
+        #    },
+        #    "coins": self.coins,
+        #    "score": self.score
+        #}
+        gameState = self.to_dict()
         with open("save_game.json", "w") as write_file:
             json.dump(gameState, write_file)
         print("Game successfully saved!")
@@ -175,6 +176,23 @@ class Game:
             return False
         print("Exiting game and returning to main menu...")
         return True
+    
+    # serialise attributes
+    def to_dict(self):
+        return {
+            "board": self.board.to_dict(),
+            "coins": self.coins,
+            "score": self.score,
+        }
+
+    # deserialise attributes
+    @classmethod
+    def from_dict(cls, data):
+        game = cls(coins=data["coins"])
+        game.score = data["score"]
+        game.board = Board.from_dict(data["board"])
+        return game
+
 # end of Game class
     
 # board
@@ -248,7 +266,7 @@ class Board:
     def board(self):
         return self._board
     
-    # (CHANGE) set board attribute to load saved game
+    # set board attribute to load saved game
     @board.setter
     def board(self, loaded_board):
         self._board = loaded_board
@@ -295,6 +313,27 @@ class Board:
                     f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
                 )
 
+    # serialise attributes
+    def to_dict(self):
+        return {
+            "length": self.length,
+            "corner": self.corner,
+            "hor": self.hor,
+            "ver": self.ver,
+            "board": [[building.to_dict() if building else 0 for building in row] for row in self.board],
+        }
+
+    # deserialise attributes
+    @classmethod
+    def from_dict(cls, data):
+        board = cls(
+            length=data["length"],
+            corner=data["corner"],
+            hor=data["hor"],
+            ver=data["ver"],
+        )
+        board.board = [[Building.from_dict(building) if building else 0 for building in row] for row in data["board"]]
+        return board
 
 # end of Board
 
@@ -357,6 +396,22 @@ class Building(ABC):
         # each building has its own implementation
         pass
 
+    # convert building instance into dictionary
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "cost": self.cost,
+            "points": self.points,
+            "character": self.character,
+        }
+
+    # convert dictionary to building instance
+    @classmethod
+    def from_dict(cls, data):
+        building = cls()
+        building.cost = data["cost"]
+        building.points = data["points"]
+        return building
 
 class Residential(Building):
     def __init__(self):
@@ -441,7 +496,6 @@ class Residential(Building):
                 self._points += 1
             elif (down.character == "O"):
                 self._points += 2
-
 
 class Industry(Building):
     def __init__(self):
@@ -710,7 +764,7 @@ def main():
 
                 # get data from file
                 saved_board = saved_game.get("board")
-                # print("test 1")
+                print("test 1")
                 saved_coins = saved_game.get("coins")
                 saved_score = saved_game.get("score")
 
@@ -725,14 +779,14 @@ def main():
                 hor = saved_board.get("hor", Board._defaultHor),
                 ver = saved_board.get("ver", Board._defaultVer)
                 )
-                # print("test 2")
+                print("test 2")
                 loaded_board.board = saved_board.get("board", []) 
-                # print("test 3")
+                print("test 3")
 
 
                 # set the loaded board to the loaded game
-                loaded_game.board = loaded_board # Error: can't set attribute 'board'
-                # print("test 4")
+                loaded_game.board = loaded_board 
+                print("test 4")
 
                 print("Game successfully loaded!")
                 loaded_game.menu()  # start the loaded game
