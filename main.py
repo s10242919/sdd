@@ -3,6 +3,7 @@
 
 # import modules
 import json
+import random
 from math import floor
 from abc import ABC, abstractmethod
 
@@ -18,7 +19,7 @@ class Game:
         self._coins = coins
         self._score = 0
 
-    @property
+    @property #class attibute 
     def board(self):
         return self._board
     
@@ -42,7 +43,7 @@ class Game:
         if not (isinstance(val, (int))):
             raise TypeError(f"Expected int, got {type(val)}")
         self._score = val
-        
+
     # display menu
     def menu(self):
         options = {"Build a Building": self.build, 
@@ -79,7 +80,61 @@ class Game:
         
 
     def build(self):
-       pass
+       buildingList = [Residential, Industry, Commercial, Park, Road]
+
+       randomBuilding1 = random.randrange(0,5)
+       randomBuilding2 = random.randrange(0,5)
+       # ensure that both building option is not the same
+       while (randomBuilding2 == randomBuilding1):
+           randomBuilding2 = random.randrange(0,5)
+       building = [buildingList[randomBuilding1], buildingList[randomBuilding2]]
+
+       #print buildings and options
+       print(f"——————BUILDINGS——————")
+       print("R - Residential\nI - Industry\nC - Commercial\nO - Park\n* - Road")
+       print("Building Options: \n1)", building[0]().character,"\n2)", building[1]().character)
+       print(f"—————————————————————")
+
+       #input building option and check if option is valid
+       while True:
+           try:
+               building_option = int(input("Enter your option: "))
+           except ValueError:
+               print("Please enter a number (1 OR 2).")
+               continue
+           building_option -= 1
+           if not (building_option in range(len(building))):
+            print("Please enter a valid option.")
+            continue
+           else:
+               building_option = building[int(building_option)]
+               break
+           
+       #input placing option and check if option is valid
+       while True:
+           try:
+               coord_input = (input("Place where? "))
+               row=ord(coord_input[0].upper()) - ord('A') + 1
+               if (len(coord_input) == 2):
+                    column = int(coord_input[-1:])
+               elif (len(coord_input) == 3):
+                    column = int(coord_input[-2:])
+               else:
+                   column = None 
+           except ValueError:
+               print("Please enter a valid input.")
+               continue
+           if ((column > 20) or (column == None) or (row > 20)):
+               print("Please enter a valid placing.")
+               continue
+           else:
+               break
+       coord = [row - 1,column - 1]
+       self.board.add(building_option, coord)
+       self._coins -= 1
+       building_option().calculatePoints(coord)
+
+
 
     def printScore(self):
         print(f"Current score: {self.score}")
@@ -200,7 +255,10 @@ class Board:
 
     # add building to board
     def add(self, building, coord): # coord - coordinate
-        pass
+        row = coord[0]
+        col = coord[-1] or coord[-2]
+        building.board = self
+        self.board[row][col] = building()
 
     def print(self): # display board
         # required variables
@@ -236,6 +294,8 @@ class Board:
                 print(
                     f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
                 )
+
+
 # end of Board
 
 
@@ -293,7 +353,7 @@ class Building(ABC):
 
     # abstract method to calculatePoints
     @abstractmethod
-    def calculatePoints(self):
+    def calculatePoints(self,coord):
         # each building has its own implementation
         pass
 
@@ -303,22 +363,152 @@ class Residential(Building):
         super().__init__()
         self._character = "R"
 
-    def calculatePoints(self):
+    def calculatePoints(self,coord):
         # if next to industry, 1 point only
         # else, 1 point for each adjacent residential or commercial
         # and 2 points for each adjacent park
-        pass
+
+        # get placing of current building
+        row = int(coord[0])
+        col = int(coord[1])
+
+        # get what is in the surrounding cells 
+        if (row == 0):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = None
+            down = self.board.board[row+1][col]
+        elif (row == 19):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = None
+        elif (col == 0):
+            left = None
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        elif (col == 19):
+            left = self.board.board[row][col-1]
+            right = None
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        else:
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+
+        # check if next to building
+        # if not == 0 means there is a building 
+
+        # turn True if there is already an Industry 
+        haveI = False
+        # left cell
+        if not (left == 0 or left == None):
+            # if next to industry/residential/commercial +1
+            if (left.character == "I" and haveI == False):
+                self._points += 1
+                haveI = True
+            if (left.character == "R" or left.character == "C"  ):
+                self._points += 1
+            elif (left.character == "O"):
+                self._points += 2
+
+        # right cell
+        if not (right == 0 or right == None):
+            # if next to industry/residential/commercial +1
+            if (right.character == "I" and haveI == False):
+                self._points += 1
+                haveI = True
+            if (left.character == "R" or left.character == "C"):
+                self._points += 1
+            elif (right.character == "O"):
+                self._points += 2
+
+        # upper cell
+        if not (up == 0 or up == None):
+            # check if next to residential/commercial +1
+            if (up.character == "R" or up.character == "C"):
+                self._points += 1
+            elif (up.character == "O"):
+                self._points += 2
+
+        # bottom cell
+        if not (down == 0 or down == None):
+            # check if next to residential/commercial +1
+            if (down.character == "R" or down.character == "C"):
+                self._points += 1
+            elif (down.character == "O"):
+                self._points += 2
 
 
 class Industry(Building):
     def __init__(self):
         super().__init__()
         self._character = "I"
-
-    def calculatePoints(self):
+    def calculatePoints(self,coord):
         # 1 point per industry
+        self._points += 1
         # generates 1 coin per adjacent residential
-        pass
+        
+        # get placing of current building
+        row = int(coord[0])
+        col = int(coord[1])
+
+        # get what is in the surrounding cells 
+        if (row == 0):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = None
+            down = self.board.board[row+1][col]
+        elif (row == 19):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = None
+        elif (col == 0):
+            left = None
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        elif (col == 19):
+            left = self.board.board[row][col-1]
+            right = None
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        else:
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+
+        # check if next to building
+        # if not == 0 means there is a building 
+
+        # left cell
+        if not (left == 0 or left == None):
+            # check if next to residential
+            if (left.character == "R"):
+                self._coins += 1
+
+        # right cell
+        if not (right == 0 or right == None):
+            # check if next to residential
+            if (right.character == "R"):
+                self._coins += 1
+
+        # upper cell
+        if not (up == 0 or up == None):
+            # check if next to residential
+            if (up.character == "R"):
+                self._coins += 1
+
+        # bottom cell
+        if not (down == 0 or down == None):
+            # check if next to residential
+            if (down.character == "R"):
+                self._coins += 1
 
 
 class Commercial(Building):
@@ -326,20 +516,138 @@ class Commercial(Building):
         super().__init__()
         self._character = "C"
 
-    def calculatePoints(self):
+    def calculatePoints(self,coord):
         # 1 point per adjacent commercial
         # generates 1 coin per adjacent residential
-        pass
+        
+        # get placing of current building
+        row = int(coord[0])
+        col = int(coord[1])
 
+        # get what is in the surrounding cells 
+        if (row == 0):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = None
+            down = self.board.board[row+1][col]
+        elif (row == 19):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = None
+        elif (col == 0):
+            left = None
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        elif (col == 19):
+            left = self.board.board[row][col-1]
+            right = None
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        else:
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+
+        # check if next to building
+        # if not == 0 means there is a building 
+
+        # left cell
+        if not (left == 0 or left == None):
+            # check if next to commercial
+            if (left == "C"):
+                self._points += 1
+            if (left == "R"):
+                self._coins += 1
+
+        # right cell
+        if not (right == 0 or right == None):
+            if (right == "C"):
+                self._points += 1
+            if (right == "R"):
+                self._coins += 1
+
+        # upper cell
+        if not (up == 0 or up == None):
+            if (up == "C"):
+                self._points += 1
+            if (up == "R"):
+                self._coins += 1
+
+        # bottom cell
+        if not (down == 0 or down == None):
+            if (down == "C"):
+                self._points += 1
+            if (down == "R"):
+                self._coins += 1
 
 class Park(Building):
     def __init__(self):
         super().__init__()
         self._character = "O"
 
-    def calculatePoints(self):
+    def calculatePoints(self,coord):
         # 1 point per adjacent park
-        pass
+        
+        # get placing of current building
+        row = int(coord[0])
+        col = int(coord[1])
+
+        # get what is in the surrounding cells 
+        if (row == 0):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = None
+            down = self.board.board[row+1][col]
+        elif (row == 19):
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = None
+        elif (col == 0):
+            left = None
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        elif (col == 19):
+            left = self.board.board[row][col-1]
+            right = None
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+        else:
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+            up = self.board.board[row-1][col]
+            down = self.board.board[row+1][col]
+
+        # check if next to building
+        # if not == 0 means there is a building 
+
+        # left cell
+        if not (left == 0 or left == None):
+            # check if next to park
+            if (left == "O"):
+                self._points += 1
+
+        # right cell
+        if not (right == 0 or right == None):
+            # check if next to park
+            if (right == "O"):
+                self._points += 1
+
+        # upper cell
+        if not (up == 0 or up == None):
+            # check if next to park
+            if (up == "O"):
+                self._points += 1
+
+        # bottom cell
+        if not (down == 0 or down == None):
+            # check if next to park
+            if (down == "O"):
+                self._points += 1
 
 
 class Road(Building):
@@ -347,9 +655,41 @@ class Road(Building):
         super().__init__()
         self._character = "*"
 
-    def calculatePoints(self):
+    def calculatePoints(self,coord):
         # 1 point per connected road in the same row
-        pass
+        
+        # get placing of current building
+        row = int(coord[0])
+        col = int(coord[1])
+
+        # get what is in the surrounding cells 
+        if (col == 0):
+            left = None
+            right = self.board.board[row][col+1]
+
+        elif (col == 19):
+            left = self.board.board[row][col-1]
+            right = None
+
+        else:
+            left = self.board.board[row][col-1]
+            right = self.board.board[row][col+1]
+
+
+        # check if next to building
+        # if not == 0 means there is a building 
+
+        # left cell
+        if not (left == 0 or left == None):
+            # check if next to road
+            if (left.character == "*"):
+                self._points += 1
+        # right cell
+        if not (right == 0 or right == None):
+            # check if next to road
+            if (right.character == "*"):
+                self._points += 1
+
 # end of 5 Buildings
 # end of classes
     
