@@ -30,12 +30,23 @@ class Game:
     @property
     def score(self):
         return self._score
+
+    @property
+    def turn(self):
+        return self._turn
     
     @score.setter
     def score(self, val):
         if not (isinstance(val, (int))):
             raise TypeError(f"Expected int, got {type(val)}")
         self._score = val
+
+    @turn.setter
+    def score(self, val):
+        if not (isinstance(val, (int))):
+            raise TypeError(f"Expected int, got {type(val)}")
+        self._turn = val
+
 
     # display menu
     def menu(self):
@@ -102,29 +113,34 @@ class Game:
            else:
                building_option = building[int(building_option)]
                break
-           
-       #input placing option and check if option is valid
+        
+       # ask for placement again if placement is not connected to existing building
        while True:
-           try:
-               coord_input = (input("Place where? "))
-               row=ord(coord_input[0].upper()) - ord('A') + 1
-               if (len(coord_input) == 2):
-                    column = int(coord_input[-1:])
-               elif (len(coord_input) == 3):
-                    column = int(coord_input[-2:])
-               else:
-                   column = None 
-           except ValueError:
-               print("Please enter a valid input.")
-               continue
-           if ((column > 20) or (column == None) or (row > 20)):
-               print("Please enter a valid placing.")
-               continue
-           else:
-               break
-       coord = [row - 1,column - 1]
-       self.board.add(building_option, coord)
+            #input placing option and check if option is valid
+            while True:
+                try:
+                    coord_input = (input("Place where? "))
+                    row=ord(coord_input[0].upper()) - ord('A') + 1
+                    if (len(coord_input) == 2):
+                            column = int(coord_input[-1:])
+                    elif (len(coord_input) == 3):
+                            column = int(coord_input[-2:])
+                    else:
+                        column = None 
+                except ValueError:
+                    print("Please enter a valid input.")
+                    continue
+                if ((column > 20) or (column == None) or (row > 20)):
+                    print("Please enter a valid placing.")
+                    continue
+                else:
+                    break
+            coord = [row - 1,column - 1]
+            valid = self.board.add(building_option, coord)
+            if (valid == True):
+                break
        self._coins -= 1
+       self._turn += 1
        building_option().calculatePoints(coord)
 
 
@@ -245,8 +261,40 @@ class Board:
     def add(self, building, coord): # coord - coordinate
         row = coord[0]
         col = coord[-1] or coord[-2]
-        building.board = self
-        self.board[row][col] = building()
+        
+        if (row == 0):
+            left = self.board[row][col-1]
+            right = self.board[row][col+1]
+            up = None
+            down = self.board[row+1][col]
+        elif (row == 19):
+            left = self.board[row][col-1]
+            right = self.board[row][col+1]
+            up = self.board[row-1][col]
+            down = None
+        elif (col == 0):
+            left = None
+            right = self.board[row][col+1]
+            up = self.board[row-1][col]
+            down = self.board[row+1][col]
+        elif (col == 19):
+            left = self.board[row][col-1]
+            right = None
+            up = self.board[row-1][col]
+            down = self.board[row+1][col]
+        else:
+            left = self.board[row][col-1]
+            right = self.board[row][col+1]
+            up = self.board[row-1][col]
+            down = self.board[row+1][col]
+        
+        if (left == 0 and right == 0 and up == 0 and down == 0 and Game.turn != 0):
+            print("Please enter a placement such that it is connected to exiting buildings")
+            return False 
+        else:
+            building.board = self
+            self.board[row][col] = building()
+            return True # to break the loop 
 
     def print(self): # display board
         # required variables
