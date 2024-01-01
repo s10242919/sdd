@@ -31,22 +31,11 @@ class Game:
     def score(self):
         return self._score
 
-    @property
-    def turn(self):
-        return self._turn
-    
     @score.setter
     def score(self, val):
         if not (isinstance(val, (int))):
             raise TypeError(f"Expected int, got {type(val)}")
         self._score = val
-
-    @turn.setter
-    def score(self, val):
-        if not (isinstance(val, (int))):
-            raise TypeError(f"Expected int, got {type(val)}")
-        self._turn = val
-
 
     # display menu
     def menu(self):
@@ -287,8 +276,8 @@ class Board:
             right = self.board[row][col+1]
             up = self.board[row-1][col]
             down = self.board[row+1][col]
-        
-        if (left == 0 and right == 0 and up == 0 and down == 0 and Game.turn != 0):
+
+        if (left == 0 and right == 0 and up == 0 and down == 0 ):
             print("Please enter a placement such that it is connected to exiting buildings")
             return False 
         else:
