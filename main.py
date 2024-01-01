@@ -699,7 +699,8 @@ def main():
     # start new game
     def start_new_game():
         game = Game() # default: 16 coins
-        game.menu()
+        while True:
+            game.menu()
 
     # load saved game
     def load_saved_game():
