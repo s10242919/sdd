@@ -305,7 +305,8 @@ class Board:
             charOrd += 1
             sqrText = ' ' * self._sqrWidth # text in square
             print(
-                f" {chr(charOrd)} {self._ver}{self._ver.join(sqrText if col == 0 else f'{sqrText[:mid]}{col.character}{sqrText[mid + 1:]}' for col in row)}{self._ver}"
+                 f" {chr(charOrd)} {self._ver}{self._ver.join(sqrText if col == 0 else '{}{}{}'.format(sqrText[:mid], col['character'], sqrText[mid + 1:]) for col in row)}{self._ver}"
+
             )
             # last horizontal line +---+---+
             if rowIdx == rowLength - 1:
@@ -764,7 +765,7 @@ def main():
 
                 # get data from file
                 saved_board = saved_game.get("board")
-                print("test 1")
+                #print("test 1")
                 saved_coins = saved_game.get("coins")
                 saved_score = saved_game.get("score")
 
@@ -779,14 +780,14 @@ def main():
                 hor = saved_board.get("hor", Board._defaultHor),
                 ver = saved_board.get("ver", Board._defaultVer)
                 )
-                print("test 2")
+                #print("test 2")
                 loaded_board.board = saved_board.get("board", []) 
-                print("test 3")
+                #print("test 3")
 
 
                 # set the loaded board to the loaded game
                 loaded_game.board = loaded_board 
-                print("test 4")
+                #print("test 4")
 
                 print("Game successfully loaded!")
                 loaded_game.menu()  # start the loaded game
