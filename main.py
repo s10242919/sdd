@@ -18,6 +18,7 @@ class Game:
             raise ValueError(f"Expected positive int, got {coins}")
         self._coins = coins
         self._score = 0
+        self._turn = 0
 
     @property #class attibute 
     def board(self):
@@ -37,39 +38,52 @@ class Game:
             raise TypeError(f"Expected int, got {type(val)}")
         self._score = val
 
+    @property
+    def turn(self):
+        return self._turn
+    
+    @turn.setter
+    def turn(self, val):
+        if not (isinstance(val, (int))):
+            raise TypeError(f"Expected int, got {type(val)}")
+        self._turn = val
+
     # display menu
     def menu(self):
-        options = {"Build a Building": self.build, 
-                "See Current Score": self.printScore,
-                "Save Game": self.save,
-                "Exit to Main Menu": self.exit}
-        
-        # show board
-        self._board.print()
-
-        # show stats
-        print(f"Coins: {self.coins}")
-
-        print(f"————— GAME MENU —————")
-        for idx, key in enumerate(options.keys()):
-            print(f"{idx+1}. {key}")
-
-        print(f"—————————————————————")
-        # check if option chosen is valid
         while True:
-                try:
-                    option = int(input(f"Enter your option: "))
-                except ValueError:
-                    print("Please enter a number.")
-                    continue
-                # minus one to get index value
-                option -= 1
-                if not (option in range(len(options))):
-                    print("Please enter a valid option.")
-                    continue
-                else:
-                    break
-        list(options.values())[option]()
+            options = {"Build a Building": self.build, 
+                    "See Current Score": self.printScore,
+                    "Save Game": self.save,
+                    "Exit to Main Menu": self.exit}
+            
+            # show board
+            self._board.print()
+
+            # show stats
+            print(f"Coins: {self.coins}")
+
+            print(f"————— GAME MENU —————")
+            for idx, key in enumerate(options.keys()):
+                print(f"{idx+1}. {key}")
+
+            print(f"—————————————————————")
+            # check if option chosen is valid
+            while True:
+                    try:
+                        option = int(input(f"Enter your option: "))
+                    except ValueError:
+                        print("Please enter a number.")
+                        continue
+                    # minus one to get index value
+                    option -= 1
+                    if not (option in range(len(options))):
+                        print("Please enter a valid option.")
+                        continue
+                    else:
+                        break
+            list(options.values())[option]()
+            if (option == 3):# if option == exit then break loop
+                break
         
 
     def build(self):
@@ -125,7 +139,7 @@ class Game:
                 else:
                     break
             coord = [row - 1,column - 1]
-            valid = self.board.add(building_option, coord)
+            valid = self.board.add(building_option, coord, self.turn)
             if (valid == True):
                 break
        self._coins -= 1
@@ -247,7 +261,7 @@ class Board:
         return self._board
 
     # add building to board
-    def add(self, building, coord): # coord - coordinate
+    def add(self, building, coord, turn): # coord - coordinate
         row = coord[0]
         col = coord[-1] or coord[-2]
         
@@ -277,7 +291,7 @@ class Board:
             up = self.board[row-1][col]
             down = self.board[row+1][col]
 
-        if (left == 0 and right == 0 and up == 0 and down == 0 ):
+        if (left == 0 and right == 0 and up == 0 and down == 0 and turn != 0 ):
             print("Please enter a placement such that it is connected to exiting buildings")
             return False 
         else:
@@ -724,8 +738,9 @@ def main():
     # start new game
     def start_new_game():
         game = Game() # default: 16 coins
-        while True:
-            game.menu()
+        # while True:
+        #     game.menu()
+        game.menu()
 
     # load saved game
     def load_saved_game():
