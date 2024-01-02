@@ -66,40 +66,32 @@ class Game:
             
             # show board
             self._board.print()
+
+            # show stats
+            print(f"Coins: {self.coins}")
+
+            print(f"————— GAME MENU —————")
+            for idx, key in enumerate(options.keys()):
+                print(f"{idx+1}. {key}")
+
+            print(f"—————————————————————")
+            # check if option chosen is valid
             while True:
-                options = {"Build a Building": self.build, 
-                        "See Current Score": self.printScore,
-                        "Save Game": self.save,
-                        "Exit to Main Menu": self.exit}
-                
-                # show board
-                self._board.print()
-
-                # show stats
-                print(f"Coins: {self.coins}")
-
-                print(f"————— GAME MENU —————")
-                for idx, key in enumerate(options.keys()):
-                    print(f"{idx+1}. {key}")
-
-                print(f"—————————————————————")
-                # check if option chosen is valid
-                while True:
-                        try:
-                            option = int(input(f"Enter your option: "))
-                        except ValueError:
-                            print("Please enter a number.")
-                            continue
-                        # minus one to get index value
-                        option -= 1
-                        if not (option in range(len(options))):
-                            print("Please enter a valid option.")
-                            continue
-                        else:
-                            break
-                list(options.values())[option]()
-                if (option == 3):# if option == exit then break loop
-                    break
+                    try:
+                        option = int(input(f"Enter your option: "))
+                    except ValueError:
+                        print("Please enter a number.")
+                        continue
+                    # minus one to get index value
+                    option -= 1
+                    if not (option in range(len(options))):
+                        print("Please enter a valid option.")
+                        continue
+                    else:
+                        break
+            list(options.values())[option]()
+            if (option == 3):# if option == exit then break loop
+                break
         
 
     def build(self):
