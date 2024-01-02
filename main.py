@@ -17,26 +17,33 @@ class Game:
         if not (isinstance(coins, (int)) and coins >= 10):
             raise ValueError(f"Expected positive int, got {coins}")
         self._coins = coins
-        self._score = 0
+        self._points = 0
         self._turn = 0
 
     @property #class attibute 
     def board(self):
         return self._board
+    
+    # (CHANGE) load saved game
+    @board.setter
+    def board(self, loaded_board):
+        if not isinstance(loaded_board, Board):
+            raise TypeError(f"{type(loaded_board)} not allowed. Board expected.")
+        self._board = loaded_board
 
     @property
     def coins(self):
         return self._coins
 
     @property
-    def score(self):
-        return self._score
+    def points(self):
+        return self._points
 
-    @score.setter
-    def score(self, val):
+    @points.setter
+    def points(self, val):
         if not (isinstance(val, (int))):
             raise TypeError(f"Expected int, got {type(val)}")
-        self._score = val
+        self._points = val
 
     @property
     def turn(self):
@@ -133,7 +140,7 @@ class Game:
                 except ValueError:
                     print("Please enter a valid input.")
                     continue
-                if ((column > 20) or (column == None) or (row > 20)):
+                if ((column == None) or (column > 20) or (row > 20)):
                     print("Please enter a valid placing.")
                     continue
                 else:
@@ -144,12 +151,13 @@ class Game:
                 break
        self._coins -= 1
        self._turn += 1
-       building_option().calculatePoints(coord)
-
+       points, coins = (building_option().calculatePoints(coord, self._coins))
+       self._points += points
+       self._coins = coins
 
 
     def printScore(self):
-        print(f"Current score: {self.score}")
+        print(f"Current score: {self.points}")
 
     def save(self):
         # things to save:
@@ -157,17 +165,18 @@ class Game:
         #   2. current score
         #   3. current coins 
 
-        gameState = {
-            "board": {
-                "length": self.board.length,
-                "corner": self.board.corner,
-                "hor": self.board.hor,
-                "ver": self.board.ver,
-                "board": self.board.board
-            },
-            "coins": self.coins,
-            "score": self.score
-        }
+        #gameState = {
+        #    "board": {
+        #        "length": self.board.length,
+        #        "corner": self.board.corner,
+        #        "hor": self.board.hor,
+        #        "ver": self.board.ver,
+        #        "board": self.board.board
+        #    },
+        #    "coins": self.coins,
+        #    "score": self.score
+        #}
+        gameState = self.to_dict()
         with open("save_game.json", "w") as write_file:
             json.dump(gameState, write_file)
         print("Game successfully saved!")
@@ -187,6 +196,23 @@ class Game:
             return False
         print("Exiting game and returning to main menu...")
         return True
+    
+    # serialise attributes
+    def to_dict(self):
+        return {
+            "board": self.board.to_dict(),
+            "coins": self.coins,
+            "score": self.points,
+        }
+
+    # deserialise attributes
+    @classmethod
+    def from_dict(cls, data):
+        game = cls(coins=data["coins"])
+        game.points = data["score"]
+        game.board = Board.from_dict(data["board"])
+        return game
+
 # end of Game class
     
 # board
@@ -259,6 +285,11 @@ class Board:
     @property
     def board(self):
         return self._board
+    
+    # set board attribute to load saved game
+    @board.setter
+    def board(self, loaded_board):
+        self._board = loaded_board
 
     # add building to board
     def add(self, building, coord, turn): # coord - coordinate
@@ -291,13 +322,19 @@ class Board:
             up = self.board[row-1][col]
             down = self.board[row+1][col]
 
+        if (self.board[row][col] != 0 ):
+            print("There is already a building there! Please enter another placement.")
+            return False
+        
+        # check if connected to existing building
         if (left == 0 and right == 0 and up == 0 and down == 0 and turn != 0 ):
-            print("Please enter a placement such that it is connected to exiting buildings")
+            print("Please enter a placement such that it is connected to exiting buildings.")
             return False 
         else:
             building.board = self
             self.board[row][col] = building()
             return True # to break the loop 
+        
 
     def print(self): # display board
         # required variables
@@ -326,7 +363,8 @@ class Board:
             charOrd += 1
             sqrText = ' ' * self._sqrWidth # text in square
             print(
-                f" {chr(charOrd)} {self._ver}{self._ver.join(sqrText if col == 0 else f'{sqrText[:mid]}{col.character}{sqrText[mid + 1:]}' for col in row)}{self._ver}"
+                 f" {chr(charOrd)} {self._ver}{self._ver.join(sqrText if col == 0 else f'{sqrText[:mid]}{col.character}{sqrText[mid + 1:]}' for col in row)}{self._ver}"
+
             )
             # last horizontal line +---+---+
             if rowIdx == rowLength - 1:
@@ -334,6 +372,27 @@ class Board:
                     f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
                 )
 
+    # serialise attributes
+    def to_dict(self):
+        return {
+            "length": self.length,
+            "corner": self.corner,
+            "hor": self.hor,
+            "ver": self.ver,
+            "board": [[building.to_dict() if building else 0 for building in row] for row in self.board],
+        }
+
+    # deserialise attributes
+    @classmethod
+    def from_dict(cls, data):
+        board = cls(
+            length=data["length"],
+            corner=data["corner"],
+            hor=data["hor"],
+            ver=data["ver"],
+        )
+        board.board = [[Building.from_dict(building) if building else 0 for building in row] for row in data["board"]]
+        return board
 
 # end of Board
 
@@ -392,17 +451,33 @@ class Building(ABC):
 
     # abstract method to calculatePoints
     @abstractmethod
-    def calculatePoints(self,coord):
+    def calculatePoints(self,coord, coins):
         # each building has its own implementation
         pass
 
+    # convert building instance into dictionary
+    def to_dict(self):
+        return {
+            "name": self.name,
+            "cost": self.cost,
+            "points": self.points,
+            "character": self.character,
+        }
+
+    # convert dictionary to building instance
+    @classmethod
+    def from_dict(cls, data):
+        building = cls()
+        building.cost = data["cost"]
+        building.points = data["points"]
+        return building
 
 class Residential(Building):
     def __init__(self):
         super().__init__()
         self._character = "R"
 
-    def calculatePoints(self,coord):
+    def calculatePoints(self,coord, coins):
         # if next to industry, 1 point only
         # else, 1 point for each adjacent residential or commercial
         # and 2 points for each adjacent park
@@ -481,12 +556,13 @@ class Residential(Building):
             elif (down.character == "O"):
                 self._points += 2
 
+        return self.points,coins
 
 class Industry(Building):
     def __init__(self):
         super().__init__()
         self._character = "I"
-    def calculatePoints(self,coord):
+    def calculatePoints(self,coord, coins):
         # 1 point per industry
         self._points += 1
         # generates 1 coin per adjacent residential
@@ -529,33 +605,34 @@ class Industry(Building):
         if not (left == 0 or left == None):
             # check if next to residential
             if (left.character == "R"):
-                self._coins += 1
+                coins += 1
 
         # right cell
         if not (right == 0 or right == None):
             # check if next to residential
             if (right.character == "R"):
-                self._coins += 1
+                coins += 1
 
         # upper cell
         if not (up == 0 or up == None):
             # check if next to residential
             if (up.character == "R"):
-                self._coins += 1
+                coins += 1
 
         # bottom cell
         if not (down == 0 or down == None):
             # check if next to residential
             if (down.character == "R"):
-                self._coins += 1
+                coins += 1
 
+        return self.points,coins
 
 class Commercial(Building):
     def __init__(self):
         super().__init__()
         self._character = "C"
 
-    def calculatePoints(self,coord):
+    def calculatePoints(self,coord, coins):
         # 1 point per adjacent commercial
         # generates 1 coin per adjacent residential
         
@@ -596,38 +673,40 @@ class Commercial(Building):
         # left cell
         if not (left == 0 or left == None):
             # check if next to commercial
-            if (left == "C"):
+            if (left.character == "C"):
                 self._points += 1
-            if (left == "R"):
-                self._coins += 1
+            if (left.character == "R"):
+                coins += 1
 
         # right cell
         if not (right == 0 or right == None):
-            if (right == "C"):
+            if (right.character == "C"):
                 self._points += 1
-            if (right == "R"):
-                self._coins += 1
+            if (right.character == "R"):
+                coins += 1
 
         # upper cell
         if not (up == 0 or up == None):
-            if (up == "C"):
+            if (up.character == "C"):
                 self._points += 1
-            if (up == "R"):
-                self._coins += 1
+            if (up.character == "R"):
+                coins += 1
 
         # bottom cell
         if not (down == 0 or down == None):
-            if (down == "C"):
+            if (down.character == "C"):
                 self._points += 1
-            if (down == "R"):
-                self._coins += 1
+            if (down.character == "R"):
+                coins += 1
+
+        return self.points,coins
 
 class Park(Building):
     def __init__(self):
         super().__init__()
         self._character = "O"
 
-    def calculatePoints(self,coord):
+    def calculatePoints(self,coord, coins):
         # 1 point per adjacent park
         
         # get placing of current building
@@ -667,34 +746,35 @@ class Park(Building):
         # left cell
         if not (left == 0 or left == None):
             # check if next to park
-            if (left == "O"):
+            if (left.character == "O"):
                 self._points += 1
 
         # right cell
         if not (right == 0 or right == None):
             # check if next to park
-            if (right == "O"):
+            if (right.character == "O"):
                 self._points += 1
 
         # upper cell
         if not (up == 0 or up == None):
             # check if next to park
-            if (up == "O"):
+            if (up.character == "O"):
                 self._points += 1
 
         # bottom cell
         if not (down == 0 or down == None):
             # check if next to park
-            if (down == "O"):
+            if (down.character == "O"):
                 self._points += 1
 
+        return self.points,coins
 
 class Road(Building):
     def __init__(self):
         super().__init__()
         self._character = "*"
 
-    def calculatePoints(self,coord):
+    def calculatePoints(self,coord, coins):
         # 1 point per connected road in the same row
         
         # get placing of current building
@@ -729,6 +809,8 @@ class Road(Building):
             if (right.character == "*"):
                 self._points += 1
 
+        return self.points,coins
+    
 # end of 5 Buildings
 # end of classes
     
@@ -738,8 +820,6 @@ def main():
     # start new game
     def start_new_game():
         game = Game() # default: 16 coins
-        # while True:
-        #     game.menu()
         game.menu()
 
     # load saved game
@@ -750,12 +830,13 @@ def main():
 
                 # get data from file
                 saved_board = saved_game.get("board")
+                #print("test 1")
                 saved_coins = saved_game.get("coins")
                 saved_score = saved_game.get("score")
 
                 # new Game instance 
                 loaded_game = Game(coins = saved_coins)
-                loaded_game.score = saved_score
+                loaded_game.points = saved_score
 
                 # new Board instance
                 loaded_board = Board(
@@ -764,10 +845,14 @@ def main():
                 hor = saved_board.get("hor", Board._defaultHor),
                 ver = saved_board.get("ver", Board._defaultVer)
                 )
-                loaded_board.board = saved_board.get("board", [])
+                #print("test 2")
+                loaded_board.board = saved_board.get("board", []) 
+                #print("test 3")
+
 
                 # set the loaded board to the loaded game
-                loaded_game.board = loaded_board
+                loaded_game.board = loaded_board 
+                #print("test 4")
 
                 print("Game successfully loaded!")
                 loaded_game.menu()  # start the loaded game
