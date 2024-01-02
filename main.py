@@ -175,7 +175,7 @@ class Game:
                "board": self.board.board
            },
            "coins": self.coins,
-           "score": self.score
+           "points": self.points
         }
         gameState = jsonpickle.encode(self)
         with open("save_game.json", "w") as write_file:
@@ -537,7 +537,7 @@ class Residential(Building):
             if (right.character == "I" and haveI == False):
                 self._points += 1
                 haveI = True
-            if (left.character == "R" or left.character == "C"):
+            if (right.character == "R" or right.character == "C"):
                 self._points += 1
             elif (right.character == "O"):
                 self._points += 2
