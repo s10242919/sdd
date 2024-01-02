@@ -4,6 +4,7 @@
 # import modules
 import json
 import random
+import jsonpickle
 from math import floor
 from abc import ABC, abstractmethod
 
@@ -46,37 +47,40 @@ class Game:
 
     # display menu
     def menu(self):
-        options = {"Build a Building": self.build, 
-                   "See Current Score": self.printScore,
-                   "Save Game": self.save,
-                   "Exit to Main Menu": self.exit}
-        
-        # show board
-        self._board.print()
-
-        # show stats
-        print(f"Coins: {self.coins}")
-
-        print(f"————— GAME MENU —————")
-        for idx, key in enumerate(options.keys()):
-            print(f"{idx+1}. {key}")
-
-        print(f"—————————————————————")
-        # check if option chosen is valid
         while True:
-                try:
-                    option = int(input(f"Enter your option: "))
-                except ValueError:
-                    print("Please enter a number.")
-                    continue
-                # minus one to get index value
-                option -= 1
-                if not (option in range(len(options))):
-                    print("Please enter a valid option.")
-                    continue
-                else:
-                    break
-        list(options.values())[option]()
+            options = {"Build a Building": self.build, 
+                    "See Current Score": self.printScore,
+                    "Save Game": self.save,
+                    "Exit to Main Menu": self.exit}
+            
+            # show board
+            self._board.print()
+
+            # show stats
+            print(f"Coins: {self.coins}")
+
+            print(f"————— GAME MENU —————")
+            for idx, key in enumerate(options.keys()):
+                print(f"{idx+1}. {key}")
+
+            print(f"—————————————————————")
+            # check if option chosen is valid
+            while True:
+                    try:
+                        option = int(input(f"Enter your option: "))
+                    except ValueError:
+                        print("Please enter a number.")
+                        continue
+                    # minus one to get index value
+                    option -= 1
+                    if not (option in range(len(options))):
+                        print("Please enter a valid option.")
+                        continue
+                    else:
+                        break
+            list(options.values())[option]()
+            if (option == 3):# if option == exit then break loop
+                break
         
 
     def build(self):
@@ -145,18 +149,18 @@ class Game:
         #   2. current score
         #   3. current coins 
 
-        #gameState = {
-        #    "board": {
-        #        "length": self.board.length,
-        #        "corner": self.board.corner,
-        #        "hor": self.board.hor,
-        #        "ver": self.board.ver,
-        #        "board": self.board.board
-        #    },
-        #    "coins": self.coins,
-        #    "score": self.score
-        #}
-        gameState = self.to_dict()
+        gameState = {
+           "board": {
+               "length": self.board.length,
+               "corner": self.board.corner,
+               "hor": self.board.hor,
+               "ver": self.board.ver,
+               "board": self.board.board
+           },
+           "coins": self.coins,
+           "score": self.score
+        }
+        gameState = jsonpickle.encode(self)
         with open("save_game.json", "w") as write_file:
             json.dump(gameState, write_file)
         print("Game successfully saved!")
@@ -305,8 +309,7 @@ class Board:
             charOrd += 1
             sqrText = ' ' * self._sqrWidth # text in square
             print(
-                 f" {chr(charOrd)} {self._ver}{self._ver.join(sqrText if col == 0 else '{}{}{}'.format(sqrText[:mid], col['character'], sqrText[mid + 1:]) for col in row)}{self._ver}"
-
+                 f" {chr(charOrd)} {self._ver}{self._ver.join(sqrText if col == 0 else f'{sqrText[:mid]}{col.character}{sqrText[mid + 1:]}' for col in row)}{self._ver}"
             )
             # last horizontal line +---+---+
             if rowIdx == rowLength - 1:
@@ -321,7 +324,7 @@ class Board:
             "corner": self.corner,
             "hor": self.hor,
             "ver": self.ver,
-            "board": [[building.to_dict() if building else 0 for building in row] for row in self.board],
+            "board": [[building.to_dict() if building else 0 for building in row] for row in self.board]
         }
 
     # deserialise attributes
@@ -397,22 +400,23 @@ class Building(ABC):
         # each building has its own implementation
         pass
 
-    # convert building instance into dictionary
-    def to_dict(self):
-        return {
-            "name": self.name,
-            "cost": self.cost,
-            "points": self.points,
-            "character": self.character,
-        }
+    # # convert building instance into dictionary
+    # def to_dict(self):
+    #     return {
+    #         "name": self.name,
+    #         "cost": self.cost,
+    #         "points": self.points,
+    #         "character": self.character,
+    #     }
 
-    # convert dictionary to building instance
-    @classmethod
-    def from_dict(cls, data):
-        building = cls()
-        building.cost = data["cost"]
-        building.points = data["points"]
-        return building
+    # # convert dictionary to building instance
+    # @classmethod
+    # def from_dict(cls, data):
+    #     building = cls()
+    #     building.cost = data["cost"]
+    #     building.points = data["points"]
+    #     building.character = data["character"]
+    #     return building
 
 class Residential(Building):
     def __init__(self):
@@ -760,43 +764,56 @@ def main():
     # load saved game
     def load_saved_game():
         try:
-            with open("save_game.json", "r") as read_saved:
-                saved_game = json.load(read_saved)
-
-                # get data from file
-                saved_board = saved_game.get("board")
-                #print("test 1")
-                saved_coins = saved_game.get("coins")
-                saved_score = saved_game.get("score")
-
-                # new Game instance 
-                loaded_game = Game(coins = saved_coins)
-                loaded_game.score = saved_score
-
-                # new Board instance
-                loaded_board = Board(
-                length = saved_board.get("length", Board._defaultLength),
-                corner = saved_board.get("corner", Board._defaultCorner),
-                hor = saved_board.get("hor", Board._defaultHor),
-                ver = saved_board.get("ver", Board._defaultVer)
-                )
-                #print("test 2")
-                loaded_board.board = saved_board.get("board", []) 
-                #print("test 3")
-
-
-                # set the loaded board to the loaded game
-                loaded_game.board = loaded_board 
-                #print("test 4")
-
-                print("Game successfully loaded!")
-                loaded_game.menu()  # start the loaded game
-
+            with open("save_game.json", "r") as read_file:
+                gameState = json.load(read_file)
+            loaded_game = jsonpickle.decode(gameState)
+            print("Game successfully loaded!")
+            return loaded_game
         except FileNotFoundError:
-            print("No saved game.")
-
+            print("No saved game found.")
+            return None
+        
         except Exception as e:
-            print(f"Error: {e}")
+             print(f"Error: {e}")
+
+        # try:
+        #     with open("save_game.json", "r") as read_saved:
+        #         saved_game = json.load(read_saved)
+
+        #         # get data from file
+        #         saved_board = saved_game.get("board")
+        #         #print("test 1")
+        #         saved_coins = saved_game.get("coins")
+        #         saved_score = saved_game.get("score")
+
+        #         # new Game instance 
+        #         loaded_game = Game(coins = saved_coins)
+        #         loaded_game.score = saved_score
+
+        #         # new Board instance
+        #         loaded_board = Board(
+        #         length = saved_board.get("length", Board._defaultLength),
+        #         corner = saved_board.get("corner", Board._defaultCorner),
+        #         hor = saved_board.get("hor", Board._defaultHor),
+        #         ver = saved_board.get("ver", Board._defaultVer)
+        #         )
+        #         #print("test 2")
+        #         loaded_board.board = saved_board.get("board", []) 
+        #         #print("test 3")
+
+
+        #         # set the loaded board to the loaded game
+        #         loaded_game.board = loaded_board 
+        #         #print("test 4")
+
+        #         print("Game successfully loaded!")
+        #         loaded_game.menu()  # start the loaded game
+
+        # except FileNotFoundError:
+        #     print("No saved game.")
+
+        # except Exception as e:
+        #     print(f"Error: {e}")
 
     # create main menu 
     while True:
@@ -811,7 +828,9 @@ def main():
         if choice == '1':
             start_new_game()
         elif choice == '2':
-            load_saved_game()
+            loaded_game = load_saved_game()
+            if loaded_game:
+                loaded_game.menu()  # start the loaded game
         elif choice == '3':
             display_high_scores()
         elif choice == '4':
