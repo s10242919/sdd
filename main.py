@@ -181,21 +181,21 @@ class Game:
         print("Exiting game and returning to main menu...")
         return True
     
-    # serialise attributes
-    def to_dict(self):
-        return {
-            "board": self.board.to_dict(),
-            "coins": self.coins,
-            "score": self.score,
-        }
+    # # serialise attributes
+    # def to_dict(self):
+    #     return {
+    #         "board": self.board.to_dict(),
+    #         "coins": self.coins,
+    #         "score": self.score,
+    #     }
 
-    # deserialise attributes
-    @classmethod
-    def from_dict(cls, data):
-        game = cls(coins=data["coins"])
-        game.score = data["score"]
-        game.board = Board.from_dict(data["board"])
-        return game
+    # # deserialise attributes
+    # @classmethod
+    # def from_dict(cls, data):
+    #     game = cls(coins=data["coins"])
+    #     game.score = data["score"]
+    #     game.board = Board.from_dict(data["board"])
+    #     return game
 
 # end of Game class
     
@@ -317,27 +317,27 @@ class Board:
                     f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
                 )
 
-    # serialise attributes
-    def to_dict(self):
-        return {
-            "length": self.length,
-            "corner": self.corner,
-            "hor": self.hor,
-            "ver": self.ver,
-            "board": [[building.to_dict() if building else 0 for building in row] for row in self.board]
-        }
+    # # serialise attributes
+    # def to_dict(self):
+    #     return {
+    #         "length": self.length,
+    #         "corner": self.corner,
+    #         "hor": self.hor,
+    #         "ver": self.ver,
+    #         "board": [[building.to_dict() if building else 0 for building in row] for row in self.board]
+    #     }
 
-    # deserialise attributes
-    @classmethod
-    def from_dict(cls, data):
-        board = cls(
-            length=data["length"],
-            corner=data["corner"],
-            hor=data["hor"],
-            ver=data["ver"],
-        )
-        board.board = [[Building.from_dict(building) if building else 0 for building in row] for row in data["board"]]
-        return board
+    # # deserialise attributes
+    # @classmethod
+    # def from_dict(cls, data):
+    #     board = cls(
+    #         length=data["length"],
+    #         corner=data["corner"],
+    #         hor=data["hor"],
+    #         ver=data["ver"],
+    #     )
+    #     board.board = [[Building.from_dict(building) if building else 0 for building in row] for row in data["board"]]
+    #     return board
 
 # end of Board
 
