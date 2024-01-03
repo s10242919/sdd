@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 # classes
 # Game class
 class Game:
-    _defaultCoins = 16
+    _defaultCoins = 16 
     def __init__(self, coins = _defaultCoins):
         self._board = Board()
         if not (isinstance(coins, (int))  ): #and coins >= 10):
@@ -95,6 +95,8 @@ class Game:
             # if coins == 0 or board is full, game over
             if (self.coins == 0 or all(all(x != 0 for x in row) for row in self.board.board)):
                 print("Game over!")
+                print(f"Final score: {self.points}")
+                self.checkHighScore(self.points)     
                 break
 
     def build(self):
@@ -164,10 +166,42 @@ class Game:
 
     def save(self):
         gameState = jsonpickle.encode(self)
-        with open("save_game.json", "w") as write_file:
+        with open("./saves/save_game.json", "w") as write_file:
             json.dump(gameState, write_file)
         print("Game successfully saved!")
         return
+
+    def checkHighScore(self, score):
+        try:
+            with open("./high_scores/high_scores.json", "r") as read_file:
+                highScores = json.load(read_file)
+        except FileNotFoundError:
+            highScores = []
+        except Exception as e:
+            print(f"Error: {e}")
+            return
+        
+        # check if score is higher than any of the high scores
+        # if yes, get name and insert score into high scores
+        if (len(highScores) < 10):
+            name = input("Enter your name: ")
+            highScores.append({"name": name, "score": score})
+            highScores = sorted(highScores, key=lambda k: k['score'], reverse=True)
+            # save high scores
+            with open("./high_scores/high_scores.json", "w") as write_file:
+                json.dump(highScores, write_file)
+            print("High score saved!")
+        else:
+            for idx, highScore in enumerate(highScores):
+                if (score > highScore["score"]):
+                    name = input("Enter your name: ")
+                    highScores.insert(idx, {"name": name, "score": score})
+                    highScores.pop()
+                    # save high scores
+                    with open("./high_scores/high_scores.json", "w") as write_file:
+                        json.dump(highScores, write_file)
+                    print("High score saved!")
+                    break
 
     def exit(self):
         valid = False
@@ -761,7 +795,7 @@ def main():
     # load saved game
     def load_saved_game():
         try:
-            with open("save_game.json", "r") as read_file:
+            with open("./saves/save_game.json", "r") as read_file:
                 gameState = json.load(read_file)
             loaded_game = jsonpickle.decode(gameState)
             print("Game successfully loaded!")
