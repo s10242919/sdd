@@ -12,10 +12,9 @@ from abc import ABC, abstractmethod
 # Game class
 class Game:
     _defaultCoins = 16
-    
     def __init__(self, coins = _defaultCoins):
         self._board = Board()
-        if not (isinstance(coins, (int)) and coins >= 10):
+        if not (isinstance(coins, (int))  ): #and coins >= 10):
             raise ValueError(f"Expected positive int, got {coins}")
         self._coins = coins
         self._points = 0
@@ -92,7 +91,11 @@ class Game:
             list(options.values())[option]()
             if (option == 3):# if option == exit then break loop
                 break
-        
+            # check if game is over
+            # if coins == 0 or board is full, game over
+            if (self.coins == 0 or all(all(x != 0 for x in row) for row in self.board.board)):
+                print("Game over!")
+                break
 
     def build(self):
        buildingList = [Residential, Industry, Commercial, Park, Road]
@@ -156,27 +159,10 @@ class Game:
        self._points += points
        self._coins = coins
 
-
     def printScore(self):
         print(f"Current score: {self.points}")
 
     def save(self):
-        # things to save:
-        #   1. board
-        #   2. current score
-        #   3. current coins 
-
-        gameState = {
-           "board": {
-               "length": self.board.length,
-               "corner": self.board.corner,
-               "hor": self.board.hor,
-               "ver": self.board.ver,
-               "board": self.board.board
-           },
-           "coins": self.coins,
-           "points": self.points
-        }
         gameState = jsonpickle.encode(self)
         with open("save_game.json", "w") as write_file:
             json.dump(gameState, write_file)
@@ -197,22 +183,6 @@ class Game:
             return False
         print("Exiting game and returning to main menu...")
         return True
-    
-    # # serialise attributes
-    # def to_dict(self):
-    #     return {
-    #         "board": self.board.to_dict(),
-    #         "coins": self.coins,
-    #         "score": self.score,
-    #     }
-
-    # # deserialise attributes
-    # @classmethod
-    # def from_dict(cls, data):
-    #     game = cls(coins=data["coins"])
-    #     game.score = data["score"]
-    #     game.board = Board.from_dict(data["board"])
-    #     return game
 
 # end of Game class
     
@@ -248,8 +218,12 @@ class Board:
         for _boardRow in range(length):
             _boardCol = []
             for y in range(length):
-                _boardCol.append(0)
+                #_boardCol.append(0)
+                r = Residential()
+                _boardCol.append(r)
             self._board.append(_boardCol)
+        self._board[0][0] = 0
+        self._size = length * length
 
     @property
     def length(self):
@@ -291,6 +265,10 @@ class Board:
     @board.setter
     def board(self, loaded_board):
         self._board = loaded_board
+
+    @property
+    def size(self):
+        return self._size
 
     # add building to board
     def add(self, building, coord, turn): # coord - coordinate
@@ -372,29 +350,6 @@ class Board:
                 print(
                     f"   {(self._hor * self._sqrWidth).join(self._corner for col in range(rowLength+1))}"
                 )
-
-    # # serialise attributes
-    # def to_dict(self):
-    #     return {
-    #         "length": self.length,
-    #         "corner": self.corner,
-    #         "hor": self.hor,
-    #         "ver": self.ver,
-    #         "board": [[building.to_dict() if building else 0 for building in row] for row in self.board]
-    #     }
-
-    # # deserialise attributes
-    # @classmethod
-    # def from_dict(cls, data):
-    #     board = cls(
-    #         length=data["length"],
-    #         corner=data["corner"],
-    #         hor=data["hor"],
-    #         ver=data["ver"],
-    #     )
-    #     board.board = [[Building.from_dict(building) if building else 0 for building in row] for row in data["board"]]
-    #     return board
-
 # end of Board
 
 
@@ -455,24 +410,6 @@ class Building(ABC):
     def calculatePoints(self,coord, coins):
         # each building has its own implementation
         pass
-
-    # # convert building instance into dictionary
-    # def to_dict(self):
-    #     return {
-    #         "name": self.name,
-    #         "cost": self.cost,
-    #         "points": self.points,
-    #         "character": self.character,
-    #     }
-
-    # # convert dictionary to building instance
-    # @classmethod
-    # def from_dict(cls, data):
-    #     building = cls()
-    #     building.cost = data["cost"]
-    #     building.points = data["points"]
-    #     building.character = data["character"]
-    #     return building
 
 class Residential(Building):
     def __init__(self):
@@ -839,45 +776,6 @@ def main():
         except Exception as e:
              print(f"Error: {e}")
 
-        # try:
-        #     with open("save_game.json", "r") as read_saved:
-        #         saved_game = json.load(read_saved)
-
-        #         # get data from file
-        #         saved_board = saved_game.get("board")
-        #         #print("test 1")
-        #         saved_coins = saved_game.get("coins")
-        #         saved_score = saved_game.get("score")
-
-        #         # new Game instance 
-        #         loaded_game = Game(coins = saved_coins)
-        #         loaded_game.score = saved_score
-
-        #         # new Board instance
-        #         loaded_board = Board(
-        #         length = saved_board.get("length", Board._defaultLength),
-        #         corner = saved_board.get("corner", Board._defaultCorner),
-        #         hor = saved_board.get("hor", Board._defaultHor),
-        #         ver = saved_board.get("ver", Board._defaultVer)
-        #         )
-        #         #print("test 2")
-        #         loaded_board.board = saved_board.get("board", []) 
-        #         #print("test 3")
-
-
-        #         # set the loaded board to the loaded game
-        #         loaded_game.board = loaded_board 
-        #         #print("test 4")
-
-        #         print("Game successfully loaded!")
-        #         loaded_game.menu()  # start the loaded game
-
-        # except FileNotFoundError:
-        #     print("No saved game.")
-
-        # except Exception as e:
-        #     print(f"Error: {e}")
-
     # create main menu 
     while True:
         print("------------ Main Menu ------------")
@@ -894,12 +792,12 @@ def main():
             if loaded_game:
                 loaded_game.menu()  # start the loaded game
         elif choice == '3':
-            display_high_scores()
+            pass
+            #todo: merge with Sin Yu's code
+            #display_high_scores()
         elif choice == '4':
             print("Exit game. Goodbye!")
             break
         else:
             print("Invalid choice. Please enter a number between 1 and 4.")
-            
-
 main()
