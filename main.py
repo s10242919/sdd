@@ -218,11 +218,8 @@ class Board:
         for _boardRow in range(length):
             _boardCol = []
             for y in range(length):
-                #_boardCol.append(0)
-                r = Residential()
-                _boardCol.append(r)
+                _boardCol.append(0)
             self._board.append(_boardCol)
-        self._board[0][0] = 0
         self._size = length * length
 
     @property
