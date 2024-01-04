@@ -75,7 +75,11 @@ class Game:
        pass
 
     def printScore(self):
-        print(f"Current score: {self.score}")
+        with open("high_score.json", "r") as openfile:
+            json_object = json.load(openfile)
+        print(json_object)
+        print(f"Current score: {self.points}")
+        return
 
     def save(self):
         # things to save:
