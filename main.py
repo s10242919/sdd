@@ -12,11 +12,11 @@ from abc import ABC, abstractmethod
 # classes
 # Game class
 class Game:
-    _defaultCoins = 16 
+    _defaultCoins = 16
     def __init__(self, coins = _defaultCoins):
         self._board = Board()
-        if not (isinstance(coins, (int))  ): #and coins >= 10):
-            raise ValueError(f"Expected positive int, got {coins}")
+        if not (isinstance(coins, (int)) and coins >= 10):
+            raise ValueError(f"Expected int >= 10, got {coins}")
         self._coins = coins
         self._points = 0
         self._turn = 0
@@ -25,8 +25,7 @@ class Game:
     def board(self):
         return self._board
     
-    # (CHANGE) load saved game
-    @board.setter
+    @board.setter #setter
     def board(self, loaded_board):
         if not isinstance(loaded_board, Board):
             raise TypeError(f"{type(loaded_board)} not allowed. Board expected.")
@@ -224,7 +223,7 @@ class Game:
 # board
 class Board:
     # default board values
-    _defaultLength = 20 # todo: change to 20
+    _defaultLength = 20
     _defaultCorner = "+"  # corner piece
     _defaultHor = "—"  # horizontal piece
     _defaultVer = "|"  # vertical piece
@@ -401,7 +400,6 @@ class Building(ABC):
         return self._cost
     
     # cost setter
-
     @cost.setter
     def cost(self, val):
         if not (isinstance(val, (int))):
