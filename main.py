@@ -806,6 +806,16 @@ def main():
         except Exception as e:
              print(f"Error: {e}")
 
+    def display_high_scores():
+        try:
+            with open("./high_scores/high_scores.json", "r") as read_file:
+                entries = json.load(read_file)
+                print(f"Top {len(entries)} Highest Score{"" if len(entries) == 1 else "s"}:")
+                for entry in entries:
+                        print(f"{entries.index(entry)+1}. {entry["name"]}: {entry["score"]}")
+        except FileNotFoundError:
+            print("No high scores yet!")
+
     # create main menu 
     while True:
         print("------------ Main Menu ------------")
@@ -823,8 +833,7 @@ def main():
                 loaded_game.menu()  # start the loaded game
         elif choice == '3':
             pass
-            #todo: merge with Sin Yu's code
-            #display_high_scores()
+            display_high_scores()
         elif choice == '4':
             print("Exit game. Goodbye!")
             break
