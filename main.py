@@ -437,7 +437,7 @@ class Building(ABC):
 
     # abstract method to calculatePoints
     @abstractmethod
-    def calculatePoints(self,coord, coins):
+    def calculatePoints(self, coord, coins):
         # each building has its own implementation
         pass
 
@@ -446,7 +446,7 @@ class Residential(Building):
         super().__init__()
         self._character = "R"
 
-    def calculatePoints(self,coord, coins):
+    def calculatePoints(self, coord, coins):
         # if next to industry, 1 point only
         # else, 1 point for each adjacent residential or commercial
         # and 2 points for each adjacent park
@@ -525,13 +525,13 @@ class Residential(Building):
             elif (down.character == "O"):
                 self._points += 2
 
-        return self.points,coins
+        return self.points, coins
 
 class Industry(Building):
     def __init__(self):
         super().__init__()
         self._character = "I"
-    def calculatePoints(self,coord, coins):
+    def calculatePoints(self, coord, coins):
         # 1 point per industry
         self._points += 1
         # generates 1 coin per adjacent residential
@@ -594,13 +594,14 @@ class Industry(Building):
             if (down.character == "R"):
                 coins += 1
 
-        return self.points,coins
+        return self.points, coins
 
 class Commercial(Building):
     def __init__(self):
         super().__init__()
         self._character = "C"
 
+    def calculatePoints(self, coord, coins):
     def calculatePoints(self,coord, coins):
         # 1 point per adjacent commercial
         # generates 1 coin per adjacent residential
@@ -668,13 +669,14 @@ class Commercial(Building):
             if (down.character == "R"):
                 coins += 1
 
-        return self.points,coins
+        return self.points, coins
 
 class Park(Building):
     def __init__(self):
         super().__init__()
         self._character = "O"
 
+    def calculatePoints(self, coord, coins):
     def calculatePoints(self,coord, coins):
         # 1 point per adjacent park
         
@@ -736,7 +738,7 @@ class Park(Building):
             if (down.character == "O"):
                 self._points += 1
 
-        return self.points,coins
+        return self.points, coins
 
 class Road(Building):
     def __init__(self):
@@ -791,6 +793,11 @@ def main():
         game = Game() # default: 16 coins
         game.menu()
 
+    # start new game
+    def start_new_game():
+        game = Game() # default: 16 coins
+        game.menu()
+
     # load saved game
     def load_saved_game():
         try:
@@ -805,6 +812,27 @@ def main():
         
         except Exception as e:
              print(f"Error: {e}")
+    
+    def display_high_scores():
+        try:
+            with open("./high_scores/high_scores.json", "r") as openfile:
+                json_object = json.load(openfile)
+        except FileNotFoundError:
+            print("File does not exist!")
+        except Exception as e:
+            print(f"Error: {e}")
+
+        if len(json_object) < 1: # check if json file is empty
+            print("No records found!")
+            return
+        
+        sorted_scores = sorted(json_object, key=lambda x: x['score'], reverse=True)
+
+        print("Top 10 high scores:")
+        for player_score in sorted_scores:
+            print(player_score['name'], player_score['score'])
+
+        return
 
     # create main menu 
     while True:
@@ -822,13 +850,7 @@ def main():
             if loaded_game:
                 loaded_game.menu()  # start the loaded game
         elif choice == '3':
-            pass
-<<<<<<< HEAD
             display_high_scores()
-=======
-            #todo: merge with Sin Yu's code
-            #display_high_scores()
->>>>>>> parent of d9b9bcc (Merged Sin Yu into main)
         elif choice == '4':
             print("Exit game. Goodbye!")
             break
