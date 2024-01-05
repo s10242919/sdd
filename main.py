@@ -805,27 +805,6 @@ def main():
         
         except Exception as e:
              print(f"Error: {e}")
-    
-    def display_high_scores():
-        try:
-            with open("./high_scores/high_scores.json", "r") as openfile:
-                json_object = json.load(openfile)
-        except FileNotFoundError:
-            print("File does not exist!")
-        except Exception as e:
-            print(f"Error: {e}")
-
-        if len(json_object) < 1: # check if json file is empty
-            print("No records found!")
-            return
-        
-        sorted_scores = sorted(json_object, key=lambda x: x['score'], reverse=True)
-
-        print("Top 10 high scores:")
-        for player_score in sorted_scores:
-            print(player_score['name'], player_score['score'])
-
-        return
 
     # create main menu 
     while True:
@@ -844,7 +823,12 @@ def main():
                 loaded_game.menu()  # start the loaded game
         elif choice == '3':
             pass
+<<<<<<< HEAD
             display_high_scores()
+=======
+            #todo: merge with Sin Yu's code
+            #display_high_scores()
+>>>>>>> parent of d9b9bcc (Merged Sin Yu into main)
         elif choice == '4':
             print("Exit game. Goodbye!")
             break
