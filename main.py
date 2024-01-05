@@ -810,9 +810,9 @@ def main():
         try:
             with open("./high_scores/high_scores.json", "r") as read_file:
                 entries = json.load(read_file)
-                print(f"Top {len(entries)} Highest Score{"" if len(entries) == 1 else "s"}:")
+                print(f"Top {len(entries)} Highest Score{'' if len(entries) == 1 else 's'}:")
                 for entry in entries:
-                        print(f"{entries.index(entry)+1}. {entry["name"]}: {entry["score"]}")
+                        print(f"{entries.index(entry)+1}. {entry['name']}: {entry['score']}")
         except FileNotFoundError:
             print("No high scores yet!")
 
