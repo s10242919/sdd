@@ -602,7 +602,6 @@ class Commercial(Building):
         self._character = "C"
 
     def calculatePoints(self, coord, coins):
-    def calculatePoints(self,coord, coins):
         # 1 point per adjacent commercial
         # generates 1 coin per adjacent residential
         
@@ -677,7 +676,6 @@ class Park(Building):
         self._character = "O"
 
     def calculatePoints(self, coord, coins):
-    def calculatePoints(self,coord, coins):
         # 1 point per adjacent park
         
         # get placing of current building
@@ -745,7 +743,7 @@ class Road(Building):
         super().__init__()
         self._character = "*"
 
-    def calculatePoints(self,coord, coins):
+    def calculatePoints(self, coord, coins):
         # 1 point per connected road in the same row
         
         # get placing of current building
@@ -819,8 +817,10 @@ def main():
                 json_object = json.load(openfile)
         except FileNotFoundError:
             print("File does not exist!")
+            return
         except Exception as e:
             print(f"Error: {e}")
+            return
 
         if len(json_object) < 1: # check if json file is empty
             print("No records found!")
