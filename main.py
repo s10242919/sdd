@@ -5,7 +5,7 @@
 # import modules
 import json
 import random
-#import jsonpickle
+import jsonpickle
 from math import floor
 from abc import ABC, abstractmethod
 
@@ -807,15 +807,24 @@ def main():
              print(f"Error: {e}")
     
     def display_high_scores():
-        with open("high_scores.json", "r") as openfile:
-            json_object = json.load(openfile)
+        try:
+            with open("./high_scores/high_scores.json", "r") as openfile:
+                json_object = json.load(openfile)
+        except FileNotFoundError:
+            print("File does not exist!")
+        except Exception as e:
+            print(f"Error: {e}")
 
+        if len(json_object) < 1: # check if json file is empty
+            print("No records found!")
+            return
+        
         sorted_scores = sorted(json_object, key=lambda x: x['score'], reverse=True)
 
+        print("Top 10 high scores:")
         for player_score in sorted_scores:
             print(player_score['name'], player_score['score'])
 
-        #print(saved_highscores)
         return
 
     # create main menu 
@@ -835,7 +844,6 @@ def main():
                 loaded_game.menu()  # start the loaded game
         elif choice == '3':
             pass
-            #todo: merge with Sin Yu's code
             display_high_scores()
         elif choice == '4':
             print("Exit game. Goodbye!")
